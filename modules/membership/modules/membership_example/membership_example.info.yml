@@ -1,0 +1,15 @@
+name: Membership Example
+type: module
+description: Starter configuration to get a basic membership system up and running, purely a set of config entities to install. You may uninstall the module after enabling it, and the configurations will remain.
+# core: 8.x
+package: Membership
+dependencies:
+  - membership
+  - membership_term
+  - inline_entity_form
+
+# Information added by Drupal.org packaging script on 2019-07-01
+version: '8.x-1.x-dev'
+core: '8.x'
+project: 'membership'
+datestamp: 1561941487

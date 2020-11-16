@@ -1,0 +1,45 @@
+.block-login-popup {
+  float: right;
+  margin-bottom: 10px;
+}
+.block-login-popup a {
+  font-size: 12px;
+  font-weight: 600;
+  margin: 0 5px;
+  text-decoration: none;
+  color: #ffffff;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+}    
+.menu--account ul.menu li a {
+  padding: 5px;
+}
+
+a {
+  color: #337ab7;
+}
+
+.breadcrumb__item a {
+  color: #505050;
+}
+
+td.category {
+  background-color: rgba(244, 244, 244, 0.95);
+  font-weight: bold;
+}
+
+.header-container .logo {
+  padding: 10px 10px 10px 0;
+}
+.region--dark-background {
+  background-color: #595959;
+}
+.header-top-highlighted__section input.form-search {
+  border: none;
+}
+.header-top-highlighted__section .block-search {
+  margin-top: 25px;
+}
+.header-container .sf-menu.menu ul {
+  margin-top: 5px;
+}

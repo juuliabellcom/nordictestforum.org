@@ -1,0 +1,13 @@
+name: membership_term
+type: module
+description: Membership Term plugin for basic membership systems
+# core: 8.x
+package: Membership
+dependencies:
+  - membership
+
+# Information added by Drupal.org packaging script on 2019-07-01
+version: '8.x-1.x-dev'
+core: '8.x'
+project: 'membership'
+datestamp: 1561941487
