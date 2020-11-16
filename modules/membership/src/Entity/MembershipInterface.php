@@ -4,6 +4,7 @@ namespace Drupal\membership\Entity;
 
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityChangedInterface;
+use Drupal\Core\Entity\RevisionLogInterface;
 use Drupal\user\EntityOwnerInterface;
 
 /**
@@ -11,7 +12,7 @@ use Drupal\user\EntityOwnerInterface;
  *
  * @ingroup membership
  */
-interface MembershipInterface extends ContentEntityInterface, EntityChangedInterface, EntityOwnerInterface {
+interface MembershipInterface extends ContentEntityInterface, EntityChangedInterface, EntityOwnerInterface, RevisionLogInterface {
 
   /**
    * Gets the Membership type.

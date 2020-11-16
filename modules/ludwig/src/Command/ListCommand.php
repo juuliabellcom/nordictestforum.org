@@ -4,14 +4,13 @@ namespace Drupal\ludwig\Command;
 
 use Drupal\ludwig\PackageManagerInterface;
 use Drupal\Console\Annotations\DrupalCommand;
-use Drupal\Console\Core\Command\Shared\CommandTrait;
 use Drupal\Console\Core\Style\DrupalStyle;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Command\Command;
+use Drupal\Console\Core\Command\Command;
 
 /**
- * Class ListCommand.
+ * Lists all packages.
  *
  * @package Drupal\ludwig
  *
@@ -21,8 +20,6 @@ use Symfony\Component\Console\Command\Command;
  * )
  */
 class ListCommand extends Command {
-
-  use CommandTrait;
 
   /**
    * The package manager.
@@ -61,6 +58,8 @@ class ListCommand extends Command {
     foreach ($this->packageManager->getPackages() as $package) {
       $row = [
         $package['name'],
+        implode(', ', $package['paths']),
+        $package['resource'],
         $package['version'],
         $package['provider'],
       ];
@@ -77,6 +76,8 @@ class ListCommand extends Command {
     $io = new DrupalStyle($input, $output);
     $io->table([
       $this->trans('commands.ludwig.list.table-headers.package'),
+      $this->trans('commands.ludwig.list.table-headers.paths'),
+      $this->trans('commands.ludwig.list.table-headers.resource'),
       $this->trans('commands.ludwig.list.table-headers.version'),
       $this->trans('commands.ludwig.list.table-headers.required-by'),
       $this->trans('commands.ludwig.list.table-headers.status'),

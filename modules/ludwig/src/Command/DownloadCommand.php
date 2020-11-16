@@ -4,18 +4,17 @@ namespace Drupal\ludwig\Command;
 
 use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Console\Annotations\DrupalCommand;
-use Drupal\Console\Core\Command\Shared\CommandTrait;
 use Drupal\Console\Core\Utils\ChainQueue;
 use Drupal\Core\FileTransfer\FileTransferException;
 use Drupal\ludwig\PackageDownloaderInterface;
 use Drupal\ludwig\PackageManagerInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Command\Command;
+use Drupal\Console\Core\Command\Command;
 use Drupal\Console\Core\Style\DrupalStyle;
 
 /**
- * Class DownloadCommand.
+ * Downloads missed packages.
  *
  * @package Drupal\ludwig
  *
@@ -25,8 +24,6 @@ use Drupal\Console\Core\Style\DrupalStyle;
  * )
  */
 class DownloadCommand extends Command {
-
-  use CommandTrait;
 
   /**
    * The package manager.

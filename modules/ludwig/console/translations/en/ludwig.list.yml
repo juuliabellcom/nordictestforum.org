@@ -6,6 +6,8 @@ messages:
   missing: 'Missing'
 table-headers:
   package: 'Package'
+  paths: 'Paths'
+  resource: 'Resource'
   version: 'Version'
   required-by: 'Required by'
   status: 'Status'

@@ -45,6 +45,8 @@
               .autocomplete('option', 'source', [])
               .removeClass('form-autocomplete');
           }
+          // Always disable browser auto completion.
+          $value.attr('autocomplete', 'off');
         }).change();
       });
 

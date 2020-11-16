@@ -7,7 +7,6 @@ use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -96,39 +95,7 @@ class MenuPerRoleAdminSettings extends ConfigFormBase implements ContainerInject
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildForm($form, $form_state);
-
-    // Get the roles with "administer menu_per_role" permission.
-    $admin_roles = [];
-    /** @var \Drupal\user\RoleInterface[] $roles */
-    $roles = $this->entityTypeManager
-      ->getStorage('user_role')
-      ->loadMultiple();
-    foreach ($roles as $role) {
-      if ($role->hasPermission('administer menu_per_role')) {
-        $admin_roles[] = $role->id();
-      }
-    }
-
     $config = $this->config('menu_per_role.settings');
-    $form['uid1_see_all'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('The administrator (UID=1) sees everything'),
-      '#description' => $this->t('When selected, the administrator will not be affected by Menu per Role. (i.e. All the menus are visible to him.)'),
-      '#default_value' => $config->get('uid1_see_all'),
-    ];
-
-    $form['admin_see_all'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('The menu per role administrators see everything'),
-      '#description' => $this->t('When selected, all the menu per role administrators see all the menus, whether they were marked as hidden or not.')
-      . ' ' . $this->t('<a href=":url">Check the role</a> assigned the "administer menu_per_role" permission.',
-          [
-            ':url' => Url::fromRoute('user.admin_permissions', [], ['fragment' => 'module-menu_per_role'])
-              ->toString(),
-          ])
-      . (empty($admin_roles) ? '<br /><span style="color: red;">' . $this->t('IMPORTANT NOTE: No roles were marked with the "administer menu_per_role" permission.') . '</span>' : ''),
-      '#default_value' => $config->get('admin_see_all'),
-    ];
 
     $form['hide_show'] = [
       '#type' => 'radios',
@@ -162,8 +129,6 @@ class MenuPerRoleAdminSettings extends ConfigFormBase implements ContainerInject
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $this->config('menu_per_role.settings')
-      ->set('uid1_see_all', $form_state->getValue('uid1_see_all'))
-      ->set('admin_see_all', $form_state->getValue('admin_see_all'))
       ->set('hide_show', $form_state->getValue('hide_show'))
       ->set('hide_on_content', $form_state->getValue('hide_on_content'))
       ->save();

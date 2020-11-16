@@ -3,7 +3,7 @@
 namespace Drupal\Tests\poll\FunctionalJavascript;
 
 use Drupal\Component\Render\FormattableMarkup;
-use Drupal\FunctionalJavascriptTests\JavascriptTestBase;
+use Drupal\FunctionalJavascriptTests\WebDriverTestBase;
 use Drupal\poll\PollInterface;
 use Symfony\Component\CssSelector\CssSelectorConverter;
 
@@ -12,7 +12,7 @@ use Symfony\Component\CssSelector\CssSelectorConverter;
  *
  * @group poll
  */
-class PollVoteJavascriptTest extends JavascriptTestBase {
+class PollVoteJavascriptTest extends WebDriverTestBase {
 
   /**
    * Admin user.
@@ -55,6 +55,11 @@ class PollVoteJavascriptTest extends JavascriptTestBase {
    * @var array
    */
   public static $modules = ['poll'];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'stark';
 
   /**
    * {@inheritdoc}
@@ -200,7 +205,15 @@ class PollVoteJavascriptTest extends JavascriptTestBase {
     $page = $session->getPage();
     $this->assertTrue($page->hasContent('Your vote has been recorded.'), 'Your vote was recorded.');
     $this->assertTrue($page->hasContent('Total votes: 1'), 'Vote count updated correctly.');
+    $this->assertCount(1, $this->cssSelect('.choice-title.is-current-selection'));
+    $this->assertCount(4, $this->cssSelect('.choice-title.not-current-selection'));
     $this->assertTrue($page->hasButton('Cancel vote'), "'Cancel your vote' button appears.");
+    // Reload the page so that the messages are reset.
+    $this->drupalGet('poll/' . $this->poll->id());
+    $page->pressButton('Cancel vote');
+    $session->wait(1000, 'jQuery(".messages--status").length > 0');
+    $this->assertTrue($page->hasContent('Your vote was cancelled.'));
+    $this->assertTrue($page->hasButton('Vote'), "Vote button appears.");
   }
 
 }

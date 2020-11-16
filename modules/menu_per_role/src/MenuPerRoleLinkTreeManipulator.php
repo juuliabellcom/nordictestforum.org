@@ -31,15 +31,8 @@ class MenuPerRoleLinkTreeManipulator extends DefaultMenuLinkTreeManipulators {
       $entity = $function();
       if (isset($entity->menu_per_role__show_role)) {
 
-        $config = Drupal::config('menu_per_role.settings');
-
-        $uid1_see_all = $config->get('uid1_see_all');
-        if ($uid1_see_all && $this->account->id() == 1) {
-          return $result;
-        }
-
-        $admin_see_all = $config->get('admin_see_all');
-        if ($admin_see_all && $this->account->hasPermission('administer menu_per_role')) {
+        $forceDisplay = Drupal::currentUser()->hasPermission('bypass menu_per_role access');
+        if ($forceDisplay) {
           return $result;
         }
 

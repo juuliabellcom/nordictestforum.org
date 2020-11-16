@@ -5,3 +5,6 @@ services:
   plugin.manager.membership_provider.processor:
     class: Drupal\membership\Plugin\MembershipProviderManager
     arguments: ['@container.namespaces', '@cache.discovery', '@module_handler', '@entity_field.manager', '@entity_type.manager', '@entity.query']
+  membership.repository:
+    class: Drupal\membership\MembershipRepository
+    arguments: [ '@entity_type.manager', '@language_manager', '@context.repository' ]

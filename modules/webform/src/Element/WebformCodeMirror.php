@@ -46,6 +46,7 @@ class WebformCodeMirror extends Textarea {
       '#input' => TRUE,
       '#mode' => 'text',
       '#skip_validation' => FALSE,
+      '#decode_value' => FALSE,
       '#cols' => 60,
       '#rows' => 5,
       '#wrap' => TRUE,
@@ -68,13 +69,13 @@ class WebformCodeMirror extends Textarea {
    * {@inheritdoc}
    */
   public static function valueCallback(&$element, $input, FormStateInterface $form_state) {
-    if ($input === FALSE && $element['#mode'] == 'yaml' && isset($element['#default_value'])) {
+    if ($input === FALSE && $element['#mode'] === 'yaml' && isset($element['#default_value'])) {
       // Convert associative array in default value to YAML.
       if (is_array($element['#default_value'])) {
         $element['#default_value'] = WebformYaml::encode($element['#default_value']);
       }
       // Convert empty YAML into an empty string.
-      if ($element['#default_value'] == '{  }') {
+      if ($element['#default_value'] === '{  }') {
         $element['#default_value'] = '';
       }
       return $element['#default_value'];
@@ -92,7 +93,7 @@ class WebformCodeMirror extends Textarea {
     }
 
     // Check edit Twig template permission and complete disable editing.
-    if ($element['#mode'] == 'twig') {
+    if ($element['#mode'] === 'twig') {
       if (!WebformTwigExtension::hasEditTwigAccess()) {
         $element['#disable'] = TRUE;
         $element['#attributes']['disabled'] = 'disabled';
@@ -147,7 +148,7 @@ class WebformCodeMirror extends Textarea {
     if ($errors) {
       $build = [
         'title' => [
-          '#markup' => t('%title is not valid.', ['%title' => (isset($element['#title']) ? $element['#title'] : t('YAML'))]),
+          '#markup' => t('%title is not valid.', ['%title' => static::getTitle($element)]),
         ],
         'errors' => [
           '#theme' => 'item_list',
@@ -158,7 +159,9 @@ class WebformCodeMirror extends Textarea {
     }
     else {
       // If editing YAML and #default_value is an array, decode #value.
-      if ($element['#mode'] == 'yaml' && (isset($element['#default_value']) && is_array($element['#default_value']))) {
+      if ($element['#mode'] === 'yaml'
+        && (isset($element['#default_value']) && is_array($element['#default_value']) || $element['#decode_value'])
+      ) {
         // Handle rare case where single array value is not parsed correctly.
         if (preg_match('/^- (.*?)\s*$/', $element['#value'], $match)) {
           $value = [$match[1]];
@@ -191,6 +194,35 @@ class WebformCodeMirror extends Textarea {
 
       default:
         return NULL;
+    }
+  }
+
+  /**
+   * Get an element's title.
+   *
+   * @param array $element
+   *   An element.
+   *
+   * @return string
+   *   The element's title.
+   */
+  protected static function getTitle(array $element) {
+    if (isset($element['#title'])) {
+      return $element['#title'];
+    }
+
+    switch ($element['#mode']) {
+      case 'html':
+        return t('HTML');
+
+      case 'yaml':
+        return t('YAML');
+
+      case 'twig':
+        return t('Twig');
+
+      default:
+        return t('Code');
     }
   }
 

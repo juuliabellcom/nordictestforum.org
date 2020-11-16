@@ -1,6 +1,6 @@
 /**
  * @file
- * Addons styles
+ * Addons styles.
  */
 
 .webform-addons-summary {
@@ -15,11 +15,12 @@
   background-color: #f8f8f8;
 }
 
+.webform-addons-projects img {
+  float: right;
+  height: 50px;
+  margin-left: 10px;
+}
+
 .webform-addons .admin-list li {
   clear: both;
-}
-.webform-addons .admin-list li img {
-  float: right;
-  margin-left: 10px;
-  height: 50px;
 }

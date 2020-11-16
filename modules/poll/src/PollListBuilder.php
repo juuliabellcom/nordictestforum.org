@@ -57,7 +57,7 @@ class PollListBuilder extends DraggableListBuilder {
     /** @var \Drupal\poll\PollVoteStorage $vote_storage */
     $vote_storage = \Drupal::service('poll_vote.storage');
 
-    $row['question'] = $entity->link($entity->label());
+    $row['question'] = $entity->toLink()->toString();
     $row['author']['data'] = array(
       '#theme' => 'username',
       '#account' => $entity->getOwner(),

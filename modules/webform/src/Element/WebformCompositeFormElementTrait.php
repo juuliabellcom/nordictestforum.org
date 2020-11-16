@@ -29,10 +29,10 @@ trait WebformCompositeFormElementTrait {
    */
   public static function preRenderWebformCompositeFormElement($element) {
     $has_content = (isset($element['#title']) || isset($element['#description']));
+
     if (!$has_content) {
       return $element;
     }
-
     // Set attributes.
     if (!isset($element['#attributes'])) {
       $element['#attributes'] = [];
@@ -75,7 +75,7 @@ trait WebformCompositeFormElementTrait {
     switch ($wrapper_type) {
       case 'fieldset':
         // Set the element's title attribute to show #title as a tooltip, if needed.
-        if (isset($element['#title']) && $element['#title_display'] == 'attribute') {
+        if (isset($element['#title']) && $element['#title_display'] === 'attribute') {
           $element['#attributes']['title'] = $element['#title'];
           if (!empty($element['#required'])) {
             // Append an indication that this fieldset is required.

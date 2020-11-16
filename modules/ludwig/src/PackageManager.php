@@ -54,44 +54,133 @@ class PackageManager implements PackageManagerInterface {
       ];
 
       foreach ($config['require'] as $package_name => $package_data) {
-        $namespace = '';
-        $src_dir = '';
         $package_path = $extension_path . '/lib/' . str_replace('/', '-', $package_name) . '/' . $package_data['version'];
+        $disable_warnings = isset($package_data['disable_warnings']) ? $package_data['disable_warnings'] : FALSE;
         $package = $this->jsonRead($this->root . '/' . $package_path . '/composer.json');
         $description = !empty($package['description']) ? $package['description'] : '';
         $homepage = !empty($package['homepage']) ? $package['homepage'] : '';
-        $autoload_key = isset($package['autoload']['psr-4']) ? 'psr-4' : 'psr-0';
-        if (!empty($package['autoload'][$autoload_key])) {
-          $autoload = $package['autoload'][$autoload_key];
-          $package_namespaces = array_keys($autoload);
-          $namespace = reset($package_namespaces);
-          $src_dir = $autoload[$namespace];
-          $src_dir = rtrim($src_dir, './');
-          // Autoloading fails if the namespace ends with a backslash.
-          $namespace = trim($namespace, '\\');
-        }
-        if ($autoload_key == 'psr-0' && !empty($namespace)) {
-          // Core only assumes that LudwigServiceProvider is adding PSR-4
-          // paths, each PSR-0 path needs to be converted in order to work.
-          if (!empty($src_dir)) {
-            $src_dir .= '/';
-          }
-          $src_dir .= str_replace('\\', '/', $namespace);
-        }
-
-        $packages[$package_name] = [
+        // Create the base package data array.
+        $package_base = [
           'name' => $package_name,
           'version' => $package_data['version'],
           'description' => $description,
           'homepage' => $homepage,
           'provider' => $extension_name,
-          'download_url' => $package_data['url'],
-          'path' => $package_path,
           'provider_path' => $extension_path,
-          'namespace' => $namespace,
-          'src_dir' => $src_dir,
-          'installed' => !empty($namespace),
+          'download_url' => $package_data['url'],
+          'disable_warnings' => $disable_warnings,
+          'path' => $package_path,
         ];
+        if (empty($package)) {
+          // Add new package. This one needs a download.
+          $package_append = [
+            'namespace' => '',
+            'paths' => [],
+            'installed' => FALSE,
+            'resource' => '',
+          ];
+          $packages[$package_name] = array_merge($package_base, $package_append);
+          continue;
+        }
+        if (!empty($package['autoload'])) {
+          $resources = array_keys($package['autoload']);
+          // Iterate through all autoload types.
+          foreach ($resources as $resource) {
+            if (!empty($package['autoload'][$resource])) {
+              if ($resource == 'files' || $resource == 'classmap' || $resource == 'exclude-from-classmap' || $resource == 'target-dir') {
+                $autoload = $package['autoload'];
+                $package_namespaces = [$resource];
+              }
+              elseif ($resource == 'psr-4' || $resource == 'psr-0') {
+                $autoload = $package['autoload'][$resource];
+                $package_namespaces = array_keys($autoload);
+              }
+              else {
+                // The unknown library type.
+                $package_append = [
+                  'namespace' => '',
+                  'paths' => [],
+                  'installed' => TRUE,
+                  'resource' => 'unknown',
+                ];
+                $packages[$package_name] = array_merge($package_base, $package_append);
+                continue;
+              }
+              // Iterate through all the resources inside single autoload type.
+              foreach ($package_namespaces as $namespace) {
+                $paths_raw = $autoload[$namespace];
+                // Support for both single path (string) and multiple
+                // paths (array) inside one resource.
+                $paths = [];
+                if (is_array($paths_raw)) {
+                  $paths = $paths_raw;
+                }
+                elseif (is_string($paths_raw)) {
+                  $paths[] = $paths_raw;
+                }
+                // Autoloading fails if the namespace ends with a backslash.
+                $namespace = trim($namespace, '\\');
+                // Iterate through all the paths inside this resource.
+                foreach ($paths as $key => $value) {
+                  $paths[$key] = rtrim($paths[$key], './');
+                  // Core only assumes that LudwigServiceProvider is adding
+                  // PSR-4 paths, each PSR-0 path needs to be converted
+                  // in order to work.
+                  if ($resource == 'psr-0' && !empty($namespace)) {
+                    if (!empty($paths[$key])) {
+                      $paths[$key] .= '/';
+                    }
+                    $paths[$key] .= str_replace('\\', '/', $namespace);
+                  }
+                }
+                // Combine $package_name an $paths into uniuqe $name_path value.
+                $name_path = $package_name . '_' . implode('-', $paths);
+                // Two versions of the same package are not possible.
+                // If multiple providers require the same package
+                // we keep the lowest required version only, since it has
+                // the best probability to work for all providers.
+                if (!isset($packages[$name_path]) || $packages[$name_path]['version'] > $package_data['version']) {
+                  // If the current item is going to be replaced with the new
+                  // one, unset the current item first to keep all packages
+                  // nicely sorted by provider name inside the 'Packages' table.
+                  if (isset($packages[$name_path])) {
+                    unset($packages[$name_path]);
+                  }
+                  // Add new package.
+                  $package_append = [
+                    'namespace' => $namespace,
+                    'paths' => $paths,
+                    'installed' => TRUE,
+                    'resource' => $resource,
+                  ];
+                  $packages[$name_path] = array_merge($package_base, $package_append);
+                }
+              }
+            }
+          }
+        }
+        elseif (!empty($package['include-path'])) {
+          // This is the Legacy library (depricated type).
+          // They do not have autoload composer.json section
+          // but "include-path" section instead.
+          $package_append = [
+            'namespace' => '',
+            'paths' => [],
+            'installed' => TRUE,
+            'resource' => 'legacy',
+          ];
+          $packages[$package_name] = array_merge($package_base, $package_append);
+        }
+        else {
+          // The unknown library type.
+          $package_append = [
+            'namespace' => '',
+            'paths' => [],
+            'installed' => TRUE,
+            'resource' => 'unknown',
+          ];
+          $packages[$package_name] = array_merge($package_base, $package_append);
+        }
       }
     }
 
@@ -119,6 +208,5 @@ class PackageManager implements PackageManagerInterface {
 
     return $data;
   }
-
 
 }

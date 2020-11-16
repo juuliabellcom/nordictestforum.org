@@ -2,6 +2,7 @@
 
 namespace Drupal\webform\Element;
 
+use Drupal\Component\Utility\Crypt;
 use Drupal\Component\Utility\Html;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Form\OptGroup;
@@ -239,7 +240,7 @@ class WebformElementStates extends FormElement {
       if ($triggers) {
         $element['disabled_message'] = [
           '#type' => 'webform_message',
-          '#message_message' => t('<a href="https://www.w3schools.com/tags/att_input_disabled.asp">Disabled</a> elements do not submit data back to the server and the element\'s server-side default or current value will be preserved and saved to the database.'),
+          '#message_message' => t('<a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#attr-disabled">Disabled</a> elements do not submit data back to the server and the element\'s server-side default or current value will be preserved and saved to the database.'),
           '#message_type' => 'warning',
           '#states' => ['visible' => $triggers],
         ];
@@ -254,12 +255,12 @@ class WebformElementStates extends FormElement {
     $sources = [];
     if ($element['#selector_sources']) {
       foreach ($element['#selector_sources'] as $selector => $values) {
-        $sources_key = md5(serialize($values));
+        $sources_key = Crypt::hashBase64(serialize($values));
         $selectors[$selector] = $sources_key;
         if (!isset($sources[$sources_key])) {
           foreach ($values as $key => $value) {
             $sources[$sources_key][] = [
-              'label' => (string) $value . ($value != $key ? ' (' . $key . ')' : ''),
+              'label' => (string) $value . ($value !== $key ? ' (' . $key . ')' : ''),
               'value' => (string) $key,
             ];
           }
@@ -482,7 +483,15 @@ class WebformElementStates extends FormElement {
           'or',
           [$trigger_selector => ['value' => 'greater']],
           'or',
+          [$trigger_selector => ['value' => 'greater_equal']],
+          'or',
           [$trigger_selector => ['value' => 'less']],
+          'or',
+          [$trigger_selector => ['value' => 'less_equal']],
+          'or',
+          [$trigger_selector => ['value' => 'between']],
+          'or',
+          [$trigger_selector => ['value' => '!between']],
         ],
       ],
       '#wrapper_attributes' => ['class' => ['webform-states-table--value']],
@@ -491,12 +500,23 @@ class WebformElementStates extends FormElement {
     ];
     $row['condition']['pattern'] = [
       '#type' => 'container',
-      'description' => ['#markup' => t('Enter a <a href=":href">regular expression</a>', [':href' => 'http://www.w3schools.com/js/js_regexp.asp'])],
+      'description' => ['#markup' => t('Enter a <a href=":href">regular expression</a>', [':href' => 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions'])],
       '#states' => [
         'visible' => [
           [$trigger_selector => ['value' => 'pattern']],
           'or',
           [$trigger_selector => ['value' => '!pattern']],
+        ],
+      ],
+    ];
+    $row['condition']['pattern'] = [
+      '#type' => 'container',
+      'description' => ['#markup' => t('Enter a number range (1:100)')],
+      '#states' => [
+        'visible' => [
+          [$trigger_selector => ['value' => 'between']],
+          'or',
+          [$trigger_selector => ['value' => '!between']],
         ],
       ],
     ];
@@ -601,11 +621,11 @@ class WebformElementStates extends FormElement {
 
     // The $row_index is not sequential so we need to rebuild the value instead
     // of just using an array_slice().
-    $row_index = $button['#row_index'];
+    $row_index = (int) $button['#row_index'];
     $values = [];
     foreach ($element['states']['#value'] as $index => $value) {
       $values[] = $value;
-      if ($index == $row_index) {
+      if ($index === $row_index) {
         $values[] = ['selector' => '', 'trigger' => '', 'value' => ''];
       }
     }
@@ -846,7 +866,7 @@ class WebformElementStates extends FormElement {
         foreach ($state_array['conditions'] as $index => $condition) {
           extract(static::getFormApiStatesCondition($condition));
           if ($selector && $trigger) {
-            if ($operator == 'or' || $operator == 'xor') {
+            if ($operator === 'or' || $operator === 'xor') {
               if ($index !== 0) {
                 $states[$state][] = $operator;
               }
@@ -919,7 +939,7 @@ class WebformElementStates extends FormElement {
       if (in_array($trigger, ['value', '!value'])) {
         $value = $condition['value'];
       }
-      elseif (in_array($trigger, ['pattern', '!pattern', 'less', 'greater'])) {
+      elseif (in_array($trigger, ['pattern', '!pattern', 'less', 'less_equal', 'greater', 'greater_equal', 'between', '!between'])) {
         $value = [$trigger => $condition['value']];
         $trigger = 'value';
       }
@@ -1014,7 +1034,7 @@ class WebformElementStates extends FormElement {
           }
 
           // Make sure the same operator is being used between the conditions.
-          if ($operator && $operator != $condition) {
+          if ($operator && $operator !== $condition) {
             return t('Conditional logic (Form API #states) has multiple operators.', ['%operator' => mb_strtoupper($condition)]);
           }
 
@@ -1075,14 +1095,16 @@ class WebformElementStates extends FormElement {
       'filled' => t('Filled'),
       'checked' => t('Checked'),
       'unchecked' => t('Unchecked'),
-      'expanded' => t('Expanded'),
-      'collapsed' => t('Collapsed'),
       'value' => t('Value is'),
       '!value' => t('Value is not'),
       'pattern' => t('Pattern'),
       '!pattern' => t('Not Pattern'),
       'less' => t('Less than'),
+      'less_equal' => t('Less than/Equal to'),
       'greater' => t('Greater than'),
+      'greater_equal' => t('Greater than/Equal to'),
+      'between' => t('Between'),
+      '!between' => t('Not between'),
     ];
   }
 

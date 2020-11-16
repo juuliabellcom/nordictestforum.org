@@ -11,3 +11,6 @@ access poll overview:
   title: 'Access the Poll overview page'
 cancel own vote:
   title: 'Cancel own vote'
+view poll results:
+  title: 'Always view poll results'
+  description: 'Can always view poll results without voting, even when that feature is disabled on a poll.'

@@ -5,9 +5,9 @@
  * Collects votes on different topics in the form of multiple choice questions.
  */
 
-use Drupal\Component\Utility\Html;
 use Drupal\Core\Template\Attribute;
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Url;
 
 /**
  * Denotes that the poll is not published.
@@ -30,9 +30,9 @@ function poll_help($route_name, RouteMatchInterface $route_match) {
       $output .= '<h3>' . t('Uses') . '</h3>';
       $output .= '<dl>';
       $output .= '<dt>' . t('Creating a poll') . '</dt>';
-      $output .= '<dd>' . t('Users can create a poll by clicking on <a href=":add-poll">Add a poll</a> on the <a href=":polls">Polls</a> page, and entering the question being posed, the answer choices, and beginning vote counts for each choice. The status (closed or active) and duration (length of time the poll remains active for new votes) can also be specified.', array(':add-poll' => \Drupal::url('poll.poll_add'), ':polls' => \Drupal::url('poll.poll_list'))) . '</dd>';
+      $output .= '<dd>' . t('Users can create a poll by clicking on <a href=":add-poll">Add a poll</a> on the <a href=":polls">Polls</a> page, and entering the question being posed, the answer choices, and beginning vote counts for each choice. The status (closed or active) and duration (length of time the poll remains active for new votes) can also be specified.', array(':add-poll' => Url::fromRoute('poll.poll_add')->toString(), ':polls' => Url::fromRoute('poll.poll_list')->toString())) . '</dd>';
       $output .= '<dt>' . t('Viewing polls') . '</dt>';
-      $output .= '<dd>' . t('You can visit the <a href=":polls">Polls</a> page to view all current polls, or alternately enable the <em>Most recent poll</em> block on the <a href=":blocks">Blocks administration page</a>. To vote in or view the results of a specific poll, you can click on the poll itself.', array(':polls' => \Drupal::url('poll.poll_list'), ':blocks' => \Drupal::url('block.admin_display'))) . '</dd>';
+      $output .= '<dd>' . t('You can visit the <a href=":polls">Polls</a> page to view all current polls, or alternately enable the <em>Most recent poll</em> block on the <a href=":blocks">Blocks administration page</a>. To vote in or view the results of a specific poll, you can click on the poll itself.', array(':polls' => Url::fromRoute('poll.poll_list')->toString(), ':blocks' => Url::fromRoute('block.admin_display')->toString())) . '</dd>';
       $output .= '</dl>';
       return $output;
   }
@@ -77,7 +77,8 @@ function poll_theme() {
         'choice' => NULL,
         'value' => NULL,
         'percentage' => NULL,
-        'attributes' => array()
+        'attributes' => array(),
+        'poll' => NULL,
       ),
     ),
   );
@@ -144,7 +145,7 @@ function template_preprocess_poll_vote(&$variables) {
  *     tag.
  */
 function template_preprocess_poll_meter(&$variables) {
-
+  $poll = $variables['poll'];
   $attributes = $variables['attributes'];
   foreach (array(
              'form',
@@ -163,7 +164,9 @@ function template_preprocess_poll_meter(&$variables) {
       $attributes['data-' . $key] = $variables[$key];
     }
   }
-
+  $current_user_vote = \Drupal::service('poll_vote.storage')->getUserVote($poll);
+  $options = $poll->getOptions();
+  $variables['is_current_selection'] = (int) $current_user_vote['chid'] === array_search($variables['choice'], $options);
   $variables['attributes'] = new Attribute($attributes);
 }
 
@@ -186,6 +189,6 @@ function template_preprocess_poll_meter(&$variables) {
  * @see poll-results.html.twig
  */
 function template_preprocess_poll_results(&$variables) {
-  $variables['question'] = Html::escape($variables['raw_question']);
+  $variables['question'] = $variables['raw_question'];
   $variables['results_title'] = t('Results');
 }

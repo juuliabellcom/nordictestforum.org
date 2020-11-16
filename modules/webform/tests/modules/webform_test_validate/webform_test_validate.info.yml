@@ -1,13 +1,12 @@
-name: 'Webform module validate tests'
+name: 'Webform Validate test'
 type: module
-description: 'Support module for webform that provides form validate hooks for form validate tests.'
-package: Testing
-# core: 8.x
+description: 'Support module for webform validate testing.'
+package: 'Webform Testing'
+core_version_requirement: ^8.8
 dependencies:
   - 'webform:webform'
 
-# Information added by Drupal.org packaging script on 2019-07-18
-version: '8.x-5.3'
-core: '8.x'
+# Information added by Drupal.org packaging script on 2020-10-05
+version: '8.x-5.22'
 project: 'webform'
-datestamp: 1563460092
+datestamp: 1601919526

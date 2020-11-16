@@ -1,8 +1,9 @@
 name: Poll
 type: module
-# core: 8.x
+core_version_requirement: ^8.7.7 || ^9
 description: 'Allows your site to capture votes on different topics in the form of multiple choice questions.'
 package: Other
+configure: poll.settings
 dependencies:
   - drupal:field
   - drupal:node
@@ -10,8 +11,7 @@ dependencies:
   - drupal:views
   - drupal:user
 
-# Information added by Drupal.org packaging script on 2018-06-01
-version: '8.x-1.2'
-core: '8.x'
+# Information added by Drupal.org packaging script on 2020-06-29
+version: '8.x-1.4'
 project: 'poll'
-datestamp: 1527887593
+datestamp: 1593461865

@@ -38,12 +38,12 @@ class WebformComputedTwig extends WebformComputedBase {
   /**
    * {@inheritdoc}
    */
-  public static function processValue(array $element, WebformSubmissionInterface $webform_submission) {
+  public static function computeValue(array $element, WebformSubmissionInterface $webform_submission) {
     $whitespace = (!empty($element['#whitespace'])) ? $element['#whitespace'] : '';
 
     $template = ($whitespace === static::WHITESPACE_SPACELESS) ? '{% spaceless %}' . $element['#template'] . '{% endspaceless %}' : $element['#template'];
 
-    $options = ['html' => (static::getMode($element) === static::MODE_HTML)];
+    $options = ['html' => (static::getMode($element) === WebformComputedInterface::MODE_HTML)];
 
     $value = WebformTwigExtension::renderTwigTemplate($webform_submission, $template, $options);
 

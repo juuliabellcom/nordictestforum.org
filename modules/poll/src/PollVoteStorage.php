@@ -26,6 +26,13 @@ class PollVoteStorage implements PollVoteStorageInterface {
   protected $cacheTagsInvalidator;
 
   /**
+   * The poll vote for the current user keyed by Poll ID and User ID.
+   *
+   * @var array[]
+   */
+  protected $currentUserVote = [];
+
+  /**
    * Constructs a new PollVoteStorage.
    *
    * @param \Drupal\Core\Database\Connection $connection
@@ -57,6 +64,8 @@ class PollVoteStorage implements PollVoteStorageInterface {
     // Deleting a vote means that any cached vote might not be updated in the
     // UI, so we need to invalidate them all.
     $this->cacheTagsInvalidator->invalidateTags(['poll-votes:' . $poll->id()]);
+    // Invalidate the static cache of votes.
+    $this->currentUserVote = [];
   }
 
   /**
@@ -80,6 +89,8 @@ class PollVoteStorage implements PollVoteStorageInterface {
     // Deleting a vote means that any cached vote might not be updated in the
     // UI, so we need to invalidate them all.
     $this->cacheTagsInvalidator->invalidateTags(['poll-votes:' . $poll->id()]);
+    // Invalidate the static cache of votes.
+    $this->currentUserVote = [];
   }
 
   /**
@@ -94,6 +105,8 @@ class PollVoteStorage implements PollVoteStorageInterface {
     // Deleting a vote means that any cached vote might not be updated in the
     // UI, so we need to invalidate them all.
     $this->cacheTagsInvalidator->invalidateTags(['poll-votes:' . $options['pid']]);
+    // Invalidate the static cache of votes.
+    $this->currentUserVote = [];
   }
 
   /**
@@ -121,6 +134,11 @@ class PollVoteStorage implements PollVoteStorageInterface {
    */
   public function getUserVote(PollInterface $poll) {
     $uid = \Drupal::currentUser()->id();
+    $key = $poll->id() . ':' . $uid;
+    if (isset($this->currentUserVote[$key])) {
+      return $this->currentUserVote[$key];
+    }
+    $this->currentUserVote[$key] = FALSE;
     if ($uid || $poll->getAnonymousVoteAllow()) {
       if ($uid) {
         $query = $this->connection->query("SELECT * FROM {poll_vote} WHERE pid = :pid AND uid = :uid", array(
@@ -134,9 +152,9 @@ class PollVoteStorage implements PollVoteStorageInterface {
           ':hostname' => \Drupal::request()->getClientIp()
         ));
       }
-      return $query->fetchAssoc();
+      $this->currentUserVote[$key] = $query->fetchAssoc();
     }
-    return FALSE;
+    return $this->currentUserVote[$key];
   }
 
   /**

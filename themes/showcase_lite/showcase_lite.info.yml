@@ -2,7 +2,8 @@ name: Showcase Lite
 type: theme
 base theme: classy
 description: 'A flexible, recolorable theme with many regions and a responsive, mobile-first layout.'
-# core: 8.x
+core: 8.x
+core_version_requirement: ^8 || ^9
 libraries:
   - showcase_lite/fontawesome
   - showcase_lite/global-styling
@@ -54,8 +55,7 @@ regions:
   sub_footer_first: 'Subfooter First'
   footer: 'Subfooter Second'
 
-# Information added by Drupal.org packaging script on 2017-12-18
-version: '8.x-1.1'
-core: '8.x'
+# Information added by Drupal.org packaging script on 2020-10-27
+version: '8.x-1.2'
 project: 'showcase_lite'
-datestamp: 1513574901
+datestamp: 1603820286

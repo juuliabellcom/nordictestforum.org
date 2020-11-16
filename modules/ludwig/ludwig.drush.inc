@@ -1,12 +1,12 @@
 <?php
 
-use Drupal\Core\FileTransfer\FileTransferException;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
-
 /**
  * @file
  * Contains Drush integration for Ludwig.
  */
+
+use Drupal\Core\FileTransfer\FileTransferException;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Implements hook_drush_log().
@@ -15,6 +15,10 @@ function ludwig_drush_command() {
   return [
     'ludwig-download' => [
       'description' => "Downloads missing packages.",
+      'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_ROOT,
+    ],
+    'ludwig-list' => [
+      'description' => 'Lists packages managed by Ludwig.',
       'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_ROOT,
     ],
   ];
@@ -57,6 +61,57 @@ function drush_ludwig_download() {
   }
   else {
     drush_log('All packages have already been downloaded.', 'ok');
+  }
+}
+
+/**
+ * Implements drush_HOOK().
+ */
+function drush_ludwig_list() {
+  $has_missing_packages = FALSE;
+  /** @var \Drupal\ludwig\PackageManagerInterface $package_manager */
+  $package_manager = \Drupal::service('ludwig.package_manager');
+  $rows = [];
+  foreach ($package_manager->getPackages() as $package) {
+    $row = [
+      $package['name'],
+      implode(', ', $package['paths']),
+      $package['resource'],
+      $package['version'],
+      $package['provider'],
+    ];
+    if ($package['installed']) {
+      $row[] = 'Installed';
+    }
+    else {
+      $row[] = 'Missing';
+      $has_missing_packages = TRUE;
+    }
+    $rows[] = $row;
+  }
+
+  $tbl = new ReflectionClass('Console_Table');
+  $tbl = $tbl->newInstanceArgs([CONSOLE_TABLE_ALIGN_LEFT, '']);
+  $tbl->setHeaders([
+    'Package',
+    'Paths',
+    'Resource',
+    'Version',
+    'Required by',
+    'Status',
+  ]);
+  $tbl->addData($rows);
+  $output = $tbl->getTable();
+  if (!drush_is_windows()) {
+    $output = str_replace("\r\n", PHP_EOL, $output);
+  }
+  drush_print($output);
+
+  if ($has_missing_packages) {
+    $download = drush_confirm('You have missing packages, would you like to download them?');
+    if ($download) {
+      drush_invoke('ludwig-download');
+    }
   }
 }
 

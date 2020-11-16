@@ -4,42 +4,11 @@ namespace Drupal\poll;
 
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityViewBuilder;
-use Drupal\Core\Entity\EntityTypeInterface;
-use Drupal\Core\Entity\EntityRepository;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Render controller for polls.
  */
 class PollViewBuilder extends EntityViewBuilder {
-
-  /**
-   * The entity repository.
-   *
-   * @var \Drupal\Core\Entity\EntityRepository
-   */
-  protected $entityRepository;
-
-  /**
-   * {@inheritdoc}
-   */
-  public function __construct($entity_type, $entity_manager, $language_manager, EntityRepository $entity_repository, $theme_registry = NULL) {
-    parent::__construct($entity_type, $entity_manager, $language_manager, $theme_registry);
-    $this->entityRepository = $entity_repository;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
-    return new static(
-      $entity_type,
-      $container->get('entity.manager'),
-      $container->get('language_manager'),
-      $container->get('entity.repository'),
-      $container->get('theme.registry')
-    );
-  }
 
   /**
    * {@inheritdoc}

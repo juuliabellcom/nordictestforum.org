@@ -25,20 +25,28 @@ class EntityAutocomplete extends WebformElementBase implements WebformElementEnt
   /**
    * {@inheritdoc}
    */
-  public function getDefaultProperties() {
+  protected function defineDefaultProperties() {
     return [
       // Entity reference settings.
       'target_type' => '',
       'selection_handler' => 'default',
       'selection_settings' => [],
       'tags' => FALSE,
-    ] + parent::getDefaultProperties() + $this->getDefaultMultipleProperties();
+    ] + parent::defineDefaultProperties()
+      + $this->defineDefaultMultipleProperties();
   }
+
+  /****************************************************************************/
 
   /**
    * {@inheritdoc}
    */
   public function setDefaultValue(array &$element) {
+    // Make sure tags or multiple is used.
+    if (!empty($element['#tags']) && isset($element['#multiple'])) {
+      unset($element['#multiple']);
+    }
+
     if (isset($element['#multiple'])) {
       $element['#default_value'] = (isset($element['#default_value'])) ? (array) $element['#default_value'] : NULL;
       return;
@@ -123,15 +131,18 @@ class EntityAutocomplete extends WebformElementBase implements WebformElementEnt
       return;
     }
 
-    if (empty($element['#webform_multiple'])) {
-      $form_state->setValueForElement($element, static::getEntityIdFromItem($value));
-    }
-    else {
+    /** @var \Drupal\webform\Plugin\WebformElementManagerInterface $element_manager */
+    $element_manager = \Drupal::service('plugin.manager.webform.element');
+    $element_plugin = $element_manager->getElementInstance($element);
+    if ($element_plugin->hasMultipleValues($element)) {
       $entity_ids = [];
       foreach ($value as $item) {
-        $entity_ids[] = static::getEntityIdFromItem($item);
+        $entity_ids[] = (string) static::getEntityIdFromItem($item);
       }
       $form_state->setValueForElement($element, $entity_ids);
+    }
+    else {
+      $form_state->setValueForElement($element, (string) static::getEntityIdFromItem($value));
     }
   }
 

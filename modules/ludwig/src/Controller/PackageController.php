@@ -7,6 +7,7 @@ use Drupal\ludwig\PackageManagerInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -25,11 +26,11 @@ class PackageController implements ContainerInjectionInterface {
   protected $packageManager;
 
   /**
-   * The module data from system_get_info().
+   * The module extension list.
    *
-   * @var array
+   * @var \Drupal\Core\Extension\ModuleExtensionList
    */
-  protected $moduleData;
+  protected $moduleExtensionList;
 
   /**
    * Constructs a new PackageController object.
@@ -38,10 +39,13 @@ class PackageController implements ContainerInjectionInterface {
    *   The package manager.
    * @param \Drupal\Core\StringTranslation\TranslationInterface $string_translation
    *   The string translation service.
+   * @param \Drupal\Core\Extension\ModuleExtensionList $module_extension_list
+   *   The module extension list.
    */
-  public function __construct(PackageManagerInterface $package_manager, TranslationInterface $string_translation) {
+  public function __construct(PackageManagerInterface $package_manager, TranslationInterface $string_translation, ModuleExtensionList $module_extension_list) {
     $this->packageManager = $package_manager;
     $this->setStringTranslation($string_translation);
+    $this->moduleExtensionList = $module_extension_list;
   }
 
   /**
@@ -50,7 +54,8 @@ class PackageController implements ContainerInjectionInterface {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('ludwig.package_manager'),
-      $container->get('string_translation')
+      $container->get('string_translation'),
+      $container->get('extension.list.module')
     );
   }
 
@@ -61,15 +66,14 @@ class PackageController implements ContainerInjectionInterface {
    *   Returns a render array as expected by drupal_render().
    */
   public function page() {
-    if (!isset($this->moduleData)) {
-      $this->moduleData = system_get_info('module');
-    }
-
+    $info = $this->moduleExtensionList->getAllInstalledInfo();
     $build = [];
     $build['packages'] = [
       '#theme' => 'table',
       '#header' => [
         'package' => $this->t('Package'),
+        'paths' => $this->t('Paths'),
+        'resource' => $this->t('Resource'),
         'version' => $this->t('Version'),
         'required_by' => $this->t('Required by'),
         'status' => $this->t('Status'),
@@ -79,7 +83,22 @@ class PackageController implements ContainerInjectionInterface {
       ],
     ];
     foreach ($this->packageManager->getPackages() as $package_name => $package) {
-      if (!$package['installed']) {
+      if (($package['resource'] == 'classmap' || $package['resource'] == 'files') && empty($package['disable_warnings'])) {
+        $package['description'] = $this->t('<strong>Warning! The @resource autoload type libraries are not supported by Ludwig yet.</strong>', [
+          '@resource' => strtoupper($package['resource']),
+        ]);
+      }
+      elseif (($package['resource'] == 'exclude-from-classmap' || $package['resource'] == 'target-dir') && empty($package['disable_warnings'])) {
+        $package['description'] = $this->t('<strong>Warning! The @resource autoload property is not supported by Ludwig yet.</strong>', [
+          '@resource' => strtoupper($package['resource']),
+        ]);
+      }
+      elseif (($package['resource'] == 'legacy' || $package['resource'] == 'unknown') && empty($package['disable_warnings'])) {
+        $package['description'] = $this->t('<strong>Warning! The @resource library type. Not supported by Ludwig.</strong>', [
+          '@resource' => strtoupper($package['resource']),
+        ]);
+      }
+      elseif (!$package['installed']) {
         $package['description'] = $this->t('@download the library and place it in @path', [
           '@download' => Link::fromTextAndUrl($this->t('Download'), Url::fromUri($package['download_url']))->toString(),
           '@path' => $package['path'],
@@ -90,7 +109,7 @@ class PackageController implements ContainerInjectionInterface {
       if (!empty($package['homepage'])) {
         $package_column[] = [
           '#type' => 'link',
-          '#title' => $package_name,
+          '#title' => $package['name'],
           '#url' => Url::fromUri($package['homepage']),
           '#options' => [
             'attributes' => ['target' => '_blank'],
@@ -99,7 +118,7 @@ class PackageController implements ContainerInjectionInterface {
       }
       else {
         $package_column[] = [
-          '#plain_text' => $package_name,
+          '#plain_text' => $package['name'],
         ];
       }
       if (!empty($package['description'])) {
@@ -110,8 +129,8 @@ class PackageController implements ContainerInjectionInterface {
         ];
       }
       $required_by = $package['provider'];
-      if (isset($this->moduleData[$package['provider']])) {
-        $required_by = $this->moduleData[$package['provider']]['name'];
+      if (isset($info[$package['provider']])) {
+        $required_by = $info[$package['provider']]['name'];
       }
 
       $build['packages']['#rows'][$package_name] = [
@@ -120,8 +139,10 @@ class PackageController implements ContainerInjectionInterface {
           'package' => [
             'data' => $package_column,
           ],
+          'paths' => implode(', ', $package['paths']),
+          'resource' => $package['resource'],
           'version' => $package['version'],
-          'required_by' =>  $required_by,
+          'required_by' => $required_by,
           'status' => $package['installed'] ? $this->t('Installed') : $this->t('Missing'),
         ],
       ];

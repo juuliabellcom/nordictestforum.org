@@ -76,16 +76,9 @@ function menu_per_role_form_menu_link_content_form_alter(&$form, FormStateInterf
   $config = \Drupal::config('menu_per_role.settings');
 
   // Get config properties.
-  $uid1_see_all = !is_null($config->get('uid1_see_all')) ? $config->get('uid1_see_all') : FALSE;
-  $admin_see_all = !is_null($config->get('admin_see_all')) ? $config->get('admin_see_all') : FALSE;
+  $alwaysShow = \Drupal::currentUser()->hasPermission('bypass menu_per_role access');
   $hide_show_mode = !is_null($config->get('hide_show')) ? $config->get('hide_show') : MenuPerRoleAdminSettings::MODE_DISPLAY_BOTH;
   $hide_on_content_mode = !is_null($config->get('hide_on_content')) ? $config->get('hide_on_content') : MenuPerRoleAdminSettings::MODE_DISPLAY_ON_CONTENT_ALWAYS;
-
-  $user = \Drupal::currentUser();
-
-  $is_uid_1 = $uid1_see_all && ((int) $user->id() == 1);
-  $is_admin = $admin_see_all && $user->hasPermission('administer menu_per_role');
-  $alwaysShow = $is_uid_1 || $is_admin;
 
   // Check if content mode setting applies, and if fields should be hidden.
   $is_content = FALSE;

@@ -3,11 +3,12 @@
 namespace Drupal\poll;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Security\TrustedCallbackInterface;
 
 /**
  * Defines a service for poll post render cache callbacks.
  */
-class PollPostRenderCache {
+class PollPostRenderCache implements TrustedCallbackInterface {
 
   /**
    * The entity type manager.
@@ -20,10 +21,17 @@ class PollPostRenderCache {
    * Constructs a new PollPostRenderCache object.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity manager service.
+   *   The entity type manager service.
    */
   public function __construct(EntityTypeManagerInterface $entity_type_manager) {
     $this->entityTypeManager = $entity_type_manager;
+  }
+
+  /**
+   * @inheritDoc
+   */
+  public static function trustedCallbacks() {
+    return ['renderViewForm'];
   }
 
   /**
