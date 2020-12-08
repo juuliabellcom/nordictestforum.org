@@ -55,7 +55,7 @@ regions:
   sub_footer_first: 'Subfooter First'
   footer: 'Subfooter Second'
 
-# Information added by Drupal.org packaging script on 2020-10-27
-version: '8.x-1.2'
+# Information added by Drupal.org packaging script on 2020-12-08
+version: '8.x-1.3'
 project: 'showcase_lite'
-datestamp: 1603820286
+datestamp: 1607417923
